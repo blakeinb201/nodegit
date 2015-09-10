@@ -73,3 +73,19 @@ $RECYCLE.BIN/
 
 # Windows shortcuts
 *.lnk
+back/app.js
+back/public/favicon.ico
+back/public/javascripts/mapGen.js
+back/routes/hot.js
+back/routes/trends.js
+hot.txt
+back/routes/twit.js
+back/routes/initParse.js
+back/public/javascripts/mapGenold.js
+back/public/stylesheets/style.css
+public/javascripts/mapGenold.js
+back/views/error.ejs
+back/views/index.ejs
+back/routes/index.js
+hots.txt
+hotten.txt
