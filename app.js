@@ -27,10 +27,17 @@ GLOB.gHotTrendsCache = {};
 // WOEID from yahoo, used for twitter geo search (used by /twit)
 GLOB.WOEIDs = {};
 
+// Tweets from twitter search (used by /twit)
+GLOB.twits = {};
+
 // hot trending searches -global- (used by /hot)
 GLOB.HEAT = {};
 
-initG.cacheGHotness(function(data) {
+initG.cacheGHotness(filterTrends);
+
+setInterval(initG.cacheGHotness(filterTrends), 3600000);
+
+function filterTrends(data) {
 	GLOB.gHotTrendsCache = data;
 	gHotTrends = data;
 	
@@ -58,15 +65,14 @@ initG.cacheGHotness(function(data) {
 		return 0;
 	});
 	
-	HEAT.splice(10);
+	HEAT.splice(15);
 	//HEAT = HEAT.slice(10);
 	//console.log(Object.keys(topTen).length);
 	//onsole.log(Object.keys(HEAT).length);
 	
 	GLOB.HEAT = HEAT;
 	console.log("Trends ready!");
-});
-
+}
 
 
 

@@ -16,9 +16,9 @@ var defaultOptions = {
 	//sizeAxis: { minValue: 0, maxValue: 100 },
 	region: 'world', // 'US'	'AU-QLD		world
 	resolution: '',//provinces or metros		This wants provinces
-	colorAxis: {colors: ['#FFBFBF', '#B30000']},
-	backgroundColor: '#81d4fa',
-	datalessRegionColor: '#FFFFFF',
+	colorAxis: {colors: ['#F3fff9', '#099']},
+	backgroundColor: '#292F33',
+	datalessRegionColor: '#999999 ',
 	defaultColor: '#008C69',
 };
 
@@ -27,6 +27,13 @@ var defaultOptions = {
 google.load("visualization", "1", {packages:["geochart"]});
 google.setOnLoadCallback(drawRegionsMap);
 
+
+/*
+$(window).resize(function(){
+	// possible resize on window change.
+  drawChart();
+});
+*/
 
 $(function() {
 	getGHotSearches();
@@ -37,22 +44,117 @@ $(function() {
 		if (currentQ != '') {
 			//reDrawChart(currentData, ops);
 			getGTrends(currentQ, currentCountry, function(successData) {
-			currentView = 'countries';
-			var ops = {
-				region: 'world',
-				resolution: 'countries'
-			};
-			console.log("one");
-			reDrawChart(successData, ops);
-			console.log("two");
+				currentView = 'countries';
+				var ops = {
+					region: 'world',
+					resolution: 'countries'
+				};
+				console.log("one");
+				reDrawChart(successData, ops);
+				console.log("two");
 
-		});
+			});
 		}
 	});
+	
+	$('#back_col').click(function() {
+		if ($(this).text() == "Clear All") {
+			clearMap();
+			$('#inputDefault').val('');
+			//avaliableTrendData();
+		} else {
+			$('#back_col').text('Clear All')
+			currentCountry = '';
+			currentView = 'countries';
+
+			if (currentQ != '') {
+				//reDrawChart(currentData, ops);
+				getGTrends(currentQ, currentCountry, function(successData) {
+					currentView = 'countries';
+					var ops = {
+						region: 'world',
+						resolution: 'countries'
+					};
+					console.log("one");
+					reDrawChart(successData, ops);
+					console.log("two");
+
+				});
+			}
+		}
+		console.log($(this).text());
+	});
+	
+	$('#select').on('change', function() {
+		getGHotSearches(this.value);
+		//console.log(this.value); // or $(this).val()
+	});
+	
+	$('#searchbuttom').click(searchTrends);
+	
+	$("#inputDefault").keyup(function (e) {
+		if (e.keyCode == 13) {
+			searchTrends();
+		}
+	});
+	
 	$("#overlay").hide();
+	//$("#errorbox").hide();
+	
+	initPlaceSelect();
+	
+	document.getElementById("center").removeAttribute("style");
+
 });
 
+/*
+
+$(".input1").keyup(function (e) {
+    if (e.keyCode == 13) {
+        // Do something
+    }
+});*/
+
 //
+
+function searchTrends() {
+	console.log('wowo');
+	var search = $('#inputDefault').val();
+	if (search != '') {
+		currentQ = search;
+		var regionplace = currentCountry;
+		if (currentView == 'countries') regionplace = 'world';
+			getGTrends(currentQ, currentCountry, function(successData) {
+			var ops = {
+				region: regionplace,
+				resolution: currentView
+			};
+			console.log(ops);
+			reDrawChart(successData, ops);
+		});
+	}
+}
+
+function clearMap() {
+	data = google.visualization.arrayToDataTable([
+		['Place', 'Searches'],
+		['', 0]
+	]);
+	$(".topItem").removeClass('active');
+	currentQ = '';
+	chart.draw(data, defaultOptions);
+}
+
+
+function initPlaceSelect() {
+	//#select
+	var selectops = "<option value=''>Worldwide</option>";;
+	for(x in lockeys) {
+		selectops += "<option value='" + lockeys[x] + "'>" + lockeys[x] + "</option>";
+	}
+	$("#select").html(selectops);
+}
+
 
 function avaliableTrendData() {
 	var arr = [['Place', 'Searches']];
@@ -65,16 +167,36 @@ function avaliableTrendData() {
 	reDrawChart(arr, ops);
 }
 
+function errorbox(errormsg) {
+	var errordiv = '<div id="errors" class="alert alert-dismissible alert-danger text-center">' +
+						'<button type="button" class="close" data-dismiss="alert">×</button>' +
+						'<strong id="errortext">' + errormsg + '</strong>' +
+					'</div>';
+	$('#errorbox').html(errordiv);
+}
+/*
+				<div id="errors" class="alert alert-dismissible alert-danger text-center">
+					<button type="button" class="close" data-dismiss="alert">×</button>
+					<strong id="errortext">Not enough search volume to show results</strong>
+				</div>
+*/
+
+
 function reDrawChart(dataArray, options) {
 	/*data = google.visualization.arrayToDataTable([
 		['State', 'Searches'],
 		['AU-QLD', 200],
 		['AU-NSW', 300]
 	]);*/
-	if (typeof dataArray[0].detailed_message !== 'undefined') {
+	if (typeof dataArray[0].message !== 'undefined') {
 		// detailed_message = Not enough search volume to show results.
 		// message 			= Could not complete request
 		console.log("maddss"); //show some errors about it
+		var message = dataArray[0].message;
+		if (typeof dataArray[0].detailed_message !== 'undefined') {
+			message = dataArray[0].detailed_message;
+		}
+		errorbox(message);
 		return;
 	}
 	
@@ -107,12 +229,6 @@ function reDrawChart(dataArray, options) {
 	
 	//console.log("started..");
 	chart.draw(view, currentOptions);
-	
-	if (currentView == 'provinces') {
-		$("#overlay").show();
-	} else {
-		$("#overlay").hide();
-	}
 }
 
 function drawRegionsMap() {
@@ -130,7 +246,7 @@ function drawRegionsMap() {
 	google.visualization.events.addListener(chart, 'ready', imReady);
 	google.visualization.events.addListener(chart, 'regionClick', regionSelect);
 	
-	avaliableTrendData();
+	//avaliableTrendData();
 	
 	//avaliableTrendData();
 }
@@ -158,14 +274,8 @@ function selectHandler(e) {
 				resolution: 'provinces'
 			};
 			reDrawChart(successData, ops);
+			$('#back_col').text('Back to world map')
 		});
-	} else if (currentView != 'provinces') {
-		var selection = chart.getSelection();
-		var item = selection[0];
-		var selectdata = data.getFormattedValue(item.row, 0);
-		console.log(selectdata);
-		getGHotSearches(selectdata)
-		//currentCountry
 	}
 }
 
@@ -191,20 +301,24 @@ function getGHotSearches(place) {
         success: function(data) {
 			var divs = "<div id='topTrends'>";
 			for(x in data) {
-				divs += "<div class='topItem'>";
+				divs += "<a class='topItem list-group-item'>";
 				
-				divs += "<div class='itemTitle'>" + data[x].title + "</div>";
-				divs += "<div class='searches'>" + data[x].formattedTraffic + "</div>";
-				divs += "<div class='place'>" + data[x].country + "</div>";
+				divs += "<div class='itemTitle list-group-item-heading h5'>" + data[x].title + "</div>";
+				divs += "<div class='searches list-group-item-text'>" + data[x].formattedTraffic + "</div>";
+				//divs += "<div class='place'>" + data[x].country + "</div>";
 				
-				divs += "</div>";
+				divs += "</a>";
 			}
 			divs += "</div>";
 			
 			$('#trends').html(divs);
 			
 			$(".topItem").click(function() {
+				$(".topItem").removeClass('active');
+				$(this).addClass("active");
+				 
 				var q = $(".itemTitle", this).text();
+				$('#inputDefault').val(q);
 				currentQ = q;
 				var geo = '';
 				if (currentView == 'provinces') {
@@ -235,7 +349,30 @@ function getGHotSearches(place) {
     });
 }
 
-
+/*
+function makeDiv(){
+    var divsize = ((Math.random()*100) + 50).toFixed();
+    var color = '#'+ Math.round(0xffffff * Math.random()).toString(16);
+    $newdiv = $('<div/>').css({
+        'width':divsize+'px',
+        'height':divsize+'px',
+        'background-color': color
+    });
+    
+    var posx = (Math.random() * ($(document).width() - divsize)).toFixed();
+    var posy = (Math.random() * ($(document).height() - divsize)).toFixed();
+    
+    $newdiv.css({
+        'position':'absolute',
+        'left':posx+'px',
+        'top':posy+'px',
+        'display':'none'
+    }).appendTo( 'body' ).fadeIn(100).delay(300).fadeOut(200, function(){
+       $(this).remove();
+      // makeDiv(); 
+    }); 
+}
+*/
 
 
 

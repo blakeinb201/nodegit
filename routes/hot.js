@@ -6,7 +6,7 @@ router.get('/', function(req, res, next) {
 	if ((typeof req.query['geo'] !== 'undefined') && (req.query['geo'] != '')) {
 		var geo = req.query['geo'];
 		//var georeturn = GLOB.gHotTrendsCache[geo].splice(10);
-		res.json(GLOB.gHotTrendsCache[geo].slice(0, 10));
+		res.json(GLOB.gHotTrendsCache[geo].slice(0, 15));
 	} else {
 		res.json(GLOB.HEAT);
 	}
