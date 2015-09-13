@@ -5,23 +5,24 @@ var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 
+// The actual libraries I used
 var routes = require('./routes/index');
 var hot = require('./routes/hot');
 var twit = require('./routes/twit');
 var trends = require('./routes/trends');
-
 var initG = require('./routes/initParse');
 
-var fs = require('fs');
 
 var app = express();
 
+
+// GLOB or GLobal OBject is to cache results for faster access and less straint on the api providers
 GLOB = {};
 
 // Map search density from google (used by /trends)
 GLOB.gSearchCache = {};
 
-// Hot and trending searches by area (country) from google (used by /initParse and /hot) 
+// Hot and trending searches by area (country) from google (used by /initParse and /hot)
 GLOB.gHotTrendsCache = {};
 
 // WOEID from yahoo, used for twitter geo search (used by /twit)
@@ -33,15 +34,24 @@ GLOB.twits = {};
 // hot trending searches -global- (used by /hot)
 GLOB.HEAT = {};
 
-initG.cacheGHotness(filterTrends);
+//initG.cacheGHotness(filterTrends);
 
-setInterval(initG.cacheGHotness(filterTrends), 3600000);
+// update trends every hour
+setInterval(getNewTrends, 60000); // 3600000
 
+function getNewTrends() {
+	initG.cacheGHotness(filterTrends);
+}
+
+// filter and sort the trends by search volume
 function filterTrends(data) {
+	// Save the data for global use
 	GLOB.gHotTrendsCache = data;
 	gHotTrends = data;
 	
 	var HEAT = [];
+	
+	// Extract the largest search from each place
 	for(x in gHotTrends) {
 		var biggest = null;
 		for (y in gHotTrends[x]) {
@@ -56,6 +66,7 @@ function filterTrends(data) {
 		HEAT.push(biggest);
 	}
 	
+	// Sort the results 
 	HEAT.sort(function(a, b) {
 		if (a.trafficLowerBound > b.trafficLowerBound) {
 			return -1;
@@ -65,16 +76,29 @@ function filterTrends(data) {
 		return 0;
 	});
 	
+	// get the top 15 trends
 	HEAT.splice(15);
-	//HEAT = HEAT.slice(10);
-	//console.log(Object.keys(topTen).length);
-	//onsole.log(Object.keys(HEAT).length);
+	
+	// Sort the country trends
+	for(y in GLOB.gHotTrendsCache) {
+		GLOB.gHotTrendsCache[y].sort(function(a, b) {
+			if (a.trafficLowerBound > b.trafficLowerBound) {
+			return -1;
+			} else if (b.trafficLowerBound > a.trafficLowerBound) {
+				return 1;
+			}
+			return 0;
+		});
+	}
 	
 	GLOB.HEAT = HEAT;
 	console.log("Trends ready!");
 }
 
 
+
+
+///////////////////////////////// It's junk /////////////////////////////////
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));

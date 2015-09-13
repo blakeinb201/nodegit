@@ -3,20 +3,11 @@ var router = express.Router();
 
 var http = require('http');
 var querystring = require('querystring');
-
 var iso3166 = require("iso-3166-2");
 
-/* GET users listing. */
+/* GET trends. */
 router.get('/', function(req, res, next) {
-	// req.params.something
-	//res.send('respond with a resource');
-	
-	//https://www.google.com.au/trends/fetchComponent
-	//?hl=en-US&date=now+4-H&
-	//geo	// geo=AU
-	//&q=Alison+Parker	// must have
-	//&tz=Etc/GMT-10&content=1&cid=GEO_MAP_0_0&export=3
-	
+
 	var response = {};
 	if (typeof req.query === 'undefined') {
 		response = {error: "Invalid parameters"};
@@ -57,8 +48,6 @@ router.get('/', function(req, res, next) {
 		};
 
 		var getIt = http.get(options, function(re) {
-			//console.log('STATUS: ' + res.statusCode);
-			//console.log('HEADERS: ' + JSON.stringify(res.headers));
 			var bodyChunks = [];
 			re.on('data', function(chunk) {
 				bodyChunks.push(chunk);
@@ -93,7 +82,6 @@ router.get('/', function(req, res, next) {
 				};
 				
 				GLOB.gSearchCache[component] = cacheInfo;
-				//console.log(GLOB.gSearchCache);
 				res.json(formatD);
 			})
 		});
@@ -103,35 +91,31 @@ router.get('/', function(req, res, next) {
 			console.log('ERROR: ' + e.message);
 		});
 	}
-	
-	//console.log("Params: ");
-	//if (typeof req.query['hello'] !== 'undefined') console.log(req.query['hello']);
-	//console.log(req.query);
-	/*
-	
-	for(x in req.query) {
-		console.log(req.query[x]);
-	}
-	*/
 });
 
 function parseSearchResults(data) {
-	//table.rows
 	var actualData = data.table.rows;
 	var formattedData = [];
-	formattedData.push(["Country", "Search volumn index", {role:'tooltip'}]);
+	
+	// Initial table rows for displaying info
+	formattedData.push(["Country", "Search volume index", {role:'tooltip'}]);
 	for(a in actualData) {
 		var name = '';
+		
+		// Does this have a real name?
 		if (actualData[a].c[0].v.length == 2) {
 			name = iso3166.country(actualData[a].c[0].v);
 		} else {
 			name = iso3166.subdivision(actualData[a].c[0].v);
 		}
 		
+		// if it doesn't return anything then just use the country code
 		if (Object.keys(name).length === 0) {
 			name.name = actualData[a].c[0].v;
 		}
 		
+		// These are broken in the library I used so I just hardcoded them in
+		// Remember: don't try too hard.
 		if (actualData[a].c[0].v == 'CD') {
 			name.name = 'Democratic Republic of the Congo';
 		}
@@ -143,27 +127,11 @@ function parseSearchResults(data) {
 		if (actualData[a].c[0].v == 'KR') {
 			name.name = 'Republic of Korea';
 		}
-		//console.log(actualData[a].c[0].v);
-		//console.log(name);
+		
+		// push the data for straight conversion in the google chart data from array function
 		formattedData.push([actualData[a].c[0].v, actualData[a].c[1].v, name.name]);
-		//.replace(/ /g,"+") replace with whatever the table uses
-		
-		/*
-		formattedData[actualData[a].c[0].v] = actualData[a].c[1].v;
-		var areaDensity = {
-			area: actualData[a].c[0].v,
-			density: actualData[a].c[1].v
-			
-		};*/
-		
-		/*
-		for(b in actualData[a].c) {
-			actualData[a].c[b].v;
-		}*/
 	}
-	//console.log(formattedData);
 	return formattedData;
 }
-
 
 module.exports = router;

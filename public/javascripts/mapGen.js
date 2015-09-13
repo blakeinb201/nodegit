@@ -101,6 +101,14 @@ $(function() {
 	$("#overlay").hide();
 	//$("#errorbox").hide();
 	
+	$('#tweetButton').click(function() {
+		if (currentQ != '' && currentCountry != '') {
+			getTweets(currentQ, currentCountry, function(successData) {
+				console.log(successData);
+			});
+		}
+	});
+	
 	initPlaceSelect();
 	
 	document.getElementById("center").removeAttribute("style");
@@ -246,6 +254,10 @@ function drawRegionsMap() {
 	google.visualization.events.addListener(chart, 'ready', imReady);
 	google.visualization.events.addListener(chart, 'regionClick', regionSelect);
 	
+	google.visualization.events.addListener(chart, 'select', function() {
+		chart.setSelection(chart.getSelection());
+	});
+	
 	//avaliableTrendData();
 	
 	//avaliableTrendData();
@@ -348,6 +360,21 @@ function getGHotSearches(place) {
         }
     });
 }
+
+function getTweets(q, geo, callme) {
+    $.ajax({
+        url: 'twit',
+        method: 'get',
+		data: {
+			q: q,
+			geo: geo
+		},
+        success: function(data) {
+			callme(data);
+        }
+    });
+}
+
 
 /*
 function makeDiv(){
