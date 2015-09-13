@@ -37,7 +37,8 @@ GLOB.HEAT = {};
 //initG.cacheGHotness(filterTrends);
 
 // update trends every hour
-setInterval(getNewTrends, 60000); // 3600000
+getNewTrends();
+setInterval(getNewTrends, 3600000);
 
 function getNewTrends() {
 	initG.cacheGHotness(filterTrends);
