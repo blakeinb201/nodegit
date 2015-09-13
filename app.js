@@ -34,12 +34,11 @@ GLOB.twits = {};
 // hot trending searches -global- (used by /hot)
 GLOB.HEAT = {};
 
-//initG.cacheGHotness(filterTrends);
-
 // update trends every hour
 getNewTrends();
 setInterval(getNewTrends, 3600000);
 
+// Wrapping the function because setInterval was breaking
 function getNewTrends() {
 	initG.cacheGHotness(filterTrends);
 }

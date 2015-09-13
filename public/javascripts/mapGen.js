@@ -5,11 +5,15 @@ var lockeys = Object.keys(locs);
 var chart;
 var data;
 
+var PROGRESSINT = 0;
+
 var currentQ = '';
 var currentView = 'countries';
 var currentData = '';
 
 var currentCountry = '';
+
+var TWITTERCOUNTRY = 'Worldwide';
 
 var defaultOptions = {
 	legend: 'none',
@@ -37,38 +41,23 @@ $(window).resize(function(){
 
 $(function() {
 	getGHotSearches();
-	$("#overlay").click(function(){
-		currentCountry = '';
-		currentView = 'countries';
-
-		if (currentQ != '') {
-			//reDrawChart(currentData, ops);
-			getGTrends(currentQ, currentCountry, function(successData) {
-				currentView = 'countries';
-				var ops = {
-					region: 'world',
-					resolution: 'countries'
-				};
-				console.log("one");
-				reDrawChart(successData, ops);
-				console.log("two");
-
-			});
-		}
-	});
 	
 	$('#back_col').click(function() {
 		if ($(this).text() == "Clear All") {
+			$('#worldsearch').val(TWITTERCOUNTRY);
 			clearMap();
+			$('#tweets').text('');
 			$('#inputDefault').val('');
 			//avaliableTrendData();
 		} else {
 			$('#back_col').text('Clear All')
 			currentCountry = '';
+			$('#worldsearch').val(TWITTERCOUNTRY);
 			currentView = 'countries';
 
 			if (currentQ != '') {
 				//reDrawChart(currentData, ops);
+				startProgress();
 				getGTrends(currentQ, currentCountry, function(successData) {
 					currentView = 'countries';
 					var ops = {
@@ -97,33 +86,123 @@ $(function() {
 			searchTrends();
 		}
 	});
-	
-	$("#overlay").hide();
+
 	//$("#errorbox").hide();
 	
-	$('#tweetButton').click(function() {
-		if (currentQ != '' && currentCountry != '') {
-			getTweets(currentQ, currentCountry, function(successData) {
+	$('#getTweets').click(function() {
+		var countryname = $('#worldsearch').val();
+		var searchquery = $('#inputDefault').val();
+		
+		if (searchquery != '' && countryname != 'Worldwide') {
+			startProgress();
+			getTweets(searchquery, countryname, function(successData) {
+				if (typeof successData.error !== 'undefined') {
+					showError(successData.error);
+					completeProgress();
+					return;
+				}
+				
+				if (successData.search_metadata.count == 0) {
+					showError("No tweets available.");
+					completeProgress();
+					return;
+				}
+				
+				var tweetdivs = "<ul id='twitdivs' class='list-group'>";
+				for(x in successData.statuses) {
+					tweetdivs += "<li class='list-group-item'>";
+					
+					tweetdivs += "<div>" + successData.statuses[x].text + "</div>";
+					tweetdivs += "<div>" + successData.statuses[x].user.name + "</div>";
+					
+					
+					tweetdivs += "</li>";
+				}
+				
+				tweetdivs += "</ul>";
 				console.log(successData);
+				tweetdivs = Autolinker.link(twemoji.parse(tweetdivs, function(icon, options, variant) {
+					return 'https://twemoji.maxcdn.com/16x16/' + icon + '.png';
+				}));
+				
+				$('#tweets').html(tweetdivs);
+				
+				completeProgress();
+				
+				/*
+				<ul class="list-group">
+					<li class="list-group-item">
+					</li>
+					<li class="list-group-item">
+						Dapibus ac facilisis in
+					</li>
+					<li class="list-group-item">
+						Morbi leo risus
+					</li>
+				</ul>
+				*/
 			});
 		}
 	});
+
 	
 	initPlaceSelect();
 	
-	document.getElementById("center").removeAttribute("style");
+	//document.getElementById("center").removeAttribute("style");
 
 });
 
-/*
-
-$(".input1").keyup(function (e) {
-    if (e.keyCode == 13) {
-        // Do something
-    }
-});*/
-
 //
+
+
+function showError(message) {
+	BootstrapDialog.show({
+        title: 'Error',
+		message: message,
+		type: BootstrapDialog.TYPE_DANGER
+	});
+}
+
+
+function progress() {
+		var $bar = $('.progress-bar');
+		var progresswidth = $('.progress').width();
+
+		if ($bar.width() >= progresswidth) {
+			completeProgress();
+			$bar.width(0);
+		} else {
+			$bar.width($bar.width() + 100);
+		}
+}
+
+function startProgress() {
+	$('.progress-bar').width(0);
+	$(".progress-bar").show();
+	//PROGRESSINT = setInterval(progress, 500);
+	var progresswidth = $('.progress').width();
+	$('.progress-bar').width(progresswidth/2);
+}
+
+function completeProgress() {
+	var progresswidth = $('.progress').width();
+	$('.progress-bar').width(progresswidth);
+	
+	setTimeout(function() {
+		$(".progress-bar").hide();
+	}, 500);
+	
+	/*
+	clearInterval(PROGRESSINT);
+	var $bar = $('.progress-bar');
+	var progresswidth = $('.progress').width();
+	$bar.width(progresswidth);
+	$bar.width(0);
+	*/
+}
+
+
+
 
 function searchTrends() {
 	console.log('wowo');
@@ -204,7 +283,11 @@ function reDrawChart(dataArray, options) {
 		if (typeof dataArray[0].detailed_message !== 'undefined') {
 			message = dataArray[0].detailed_message;
 		}
-		errorbox(message);
+		showError(message);
+		completeProgress();
+		
+		currentView = 'countries';
+		$('#back_col').text('Clear All');
 		return;
 	}
 	
@@ -268,17 +351,24 @@ function regionSelect(place) {
 }
 
 function imReady() {
-	//console.log("I'm ready!");
+	console.log("I'm ready!");
+	completeProgress();
 }
 
 
 function selectHandler(e) {	
+	var selection = chart.getSelection();
+	var item = selection[0];
+	var countryname = data.getFormattedValue(item.row, 2);
+	$('#worldsearch').val(countryname);
+	
 	//console.log(data.getFormattedValue(item.row, 2));
 	if (currentQ != '' && currentView != 'provinces') {
 		var selection = chart.getSelection();
 		var item = selection[0];
 		var selectdata = data.getFormattedValue(item.row, 0);
 		currentCountry = selectdata;
+		startProgress()
 		getGTrends(currentQ, selectdata, function(successData) {
 			currentView = 'provinces';
 			var ops = {
@@ -286,9 +376,10 @@ function selectHandler(e) {
 				resolution: 'provinces'
 			};
 			reDrawChart(successData, ops);
-			$('#back_col').text('Back to world map')
+			$('#back_col').text('Back to world map');
 		});
 	}
+	//where-button
 }
 
 function getGTrends(q, geo, callme) {
@@ -311,19 +402,28 @@ function getGHotSearches(place) {
         method: 'get',
 		data: { geo: place },
         success: function(data) {
-			var divs = "<div id='topTrends'>";
+			var divs = "<div id='topTrends' class='list-group'>";
 			for(x in data) {
 				divs += "<a class='topItem list-group-item'>";
-				
-				divs += "<div class='itemTitle list-group-item-heading h5'>" + data[x].title + "</div>";
-				divs += "<div class='searches list-group-item-text'>" + data[x].formattedTraffic + "</div>";
+				divs += "<img src='images/favicon.ico' class='img-badge' data-href='//google.com" + data[x].titleLinkUrl + "' data-toggle='tooltip' data-placement='top' data-container='body' title='' data-original-title='Search on Google'>";
+				divs += "<span class='badge'>" + data[x].formattedTraffic + "</span>";
+				divs += "<div class='itemTitle'>" + data[x].title + "</div>";
+				//divs += "<div class='searches list-group-item-text'>" + data[x].formattedTraffic + "</div>";
 				//divs += "<div class='place'>" + data[x].country + "</div>";
+				/*
+				divs += "<span class='badge' data-toggle='tooltip' data-placement='top' data-container='body' title='' data-original-title='Search on Google'><img src='images/favicon.ico'></span>";
 				
+				
+				divs += "<img src='images/favicon.ico' class='img-badge' data-toggle='tooltip' data-placement='top' data-container='body' title='' data-original-title='Search on Google'>";
+				*/
+				//titleLinkUrl
 				divs += "</a>";
 			}
 			divs += "</div>";
 			
 			$('#trends').html(divs);
+			
+			$('[data-toggle="tooltip"]').tooltip();
 			
 			$(".topItem").click(function() {
 				$(".topItem").removeClass('active');
@@ -336,6 +436,10 @@ function getGHotSearches(place) {
 				if (currentView == 'provinces') {
 					geo = currentCountry;
 				}
+				
+				console.log("start");
+				startProgress();
+				
 				getGTrends(q, geo, function(successData) {
 					if (currentView == 'countries') {
 						currentView = 'countries';
@@ -345,17 +449,21 @@ function getGHotSearches(place) {
 						};
 					} else {
 						currentView = 'provinces';
-						console.log(currentCountry);
 						var ops = {
 							region: currentCountry,
 							resolution: currentView
 						};
 					}
 					currentData = successData;
+					console.log("done");
 					reDrawChart(successData, ops);
 				});
 				//initChart();
-				
+			});
+			
+			$('.img-badge').click(function() {
+				window.open($(this).attr('data-href'),'_blank');
+				console.log($(this).attr('data-href'));
 			});
         }
     });

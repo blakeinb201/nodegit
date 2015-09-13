@@ -48,8 +48,8 @@ router.get('/', function(req, res, next) {
 		return;
 	}
 	
-	var geoQuery = req.query['geo'];
-	var tweetQuery = req.query['q'];
+	var geoQuery = querystring.escape(req.query['geo']);
+	var tweetQuery = querystring.escape(req.query['q']);
 	
 	if (typeof GLOB.WOEIDs[geoQuery] === 'undefined') {
 		var apiKey = 'dj0yJmk9T0tZZ0JhRW1hb0FnJmQ9WVdrOVJVMHhNbXQxTlRBbWNHbzlNQS0tJnM9Y29uc3VtZXJzZWNyZXQmeD1iMA--';
@@ -62,7 +62,7 @@ router.get('/', function(req, res, next) {
 		};
 
 		var getIt = http.get(options, function(re) {
-			//console.log('STATUS: ' + res.statusCode);
+			console.log('STATUS: ' + res.statusCode);
 			//console.log('HEADERS: ' + JSON.stringify(res.headers));
 			var bodyChunks = [];
 			re.on('data', function(chunk) {
@@ -71,6 +71,7 @@ router.get('/', function(req, res, next) {
 				var body = Buffer.concat(bodyChunks);
 				
 				var jsonWOEID = JSON.parse(body);
+				console.log(jsonWOEID);
 				if (jsonWOEID.places.count != '0') {
 					var pl = jsonWOEID.places.place[0]['placeTypeName attrs'].code;
 					//console.log(pl);
@@ -150,7 +151,7 @@ function getTweets(geoPlace, q, res) {
 		geocode: geocode,
 		count: 50
 	}, function(error, tweets, response) {
-		if(error) { res.send(error); return;}
+		if(error) { res.json({error: error}); return;}
 		//res.json(tweets);
 		
 		var current = new Date();
