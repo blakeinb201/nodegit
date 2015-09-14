@@ -1,3 +1,7 @@
+/*
+ * I refuse to comment and format CSS
+*/
+
 body {
 	background-color: #292F33;
 }
@@ -52,27 +56,23 @@ body {
 
 .side-left {
 	margin-left: 0px !important;
-	margin-right: 0px !important;
+
 	
-	padding-right: 0px !important;
+
 	padding-left: 0px !important;
 }
 
 .chart-center {
-	margin-left: 0px !important;
-	padding-left: 0px !important;
-	margin-right: 0px !important;
-	padding-right: 0px !important;
+
 }
 
 .chart-center > .row {
-	margin-left: 0px !important;
-	margin-right: 0px !important;
+
 }
 
-#happening.btn-info {
-	background-color: #000000 !important;
-	border-color: #000000 !important;
+.bartitle.btn-info {
+	background-color: #060606 !important;
+	border-color: #060606 !important;
 }
 
 #where-button {
@@ -84,17 +84,16 @@ body {
 
 .side-right {
 	margin-right: 0px !important;
-	margin-left: 0px !important;
-	padding-left: 0px !important;
+
 	padding-right: 0px !important;
 }
 
+#happeningtitle {
+	font-size: 36px !important;
+}
+
 .full-body {
-	margin-left: 0px !important;
-	margin-right: 0px !important;
-	
-	padding-right: 0px !important;
-	padding-left: 0px !important;
+
 }
 
 .list-group > a, .list-group, .list-group > li {
@@ -111,6 +110,7 @@ body {
 }
 
 .img-badge {
+	height: 21px;
 	display: inline-block;
 	min-width: 10px;
 	padding: 2px 2px;

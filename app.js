@@ -5,18 +5,17 @@ var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 
-// The actual libraries I used
+// Initialise the routes
 var routes = require('./routes/index');
 var hot = require('./routes/hot');
 var twit = require('./routes/twit');
 var trends = require('./routes/trends');
 var initG = require('./routes/initParse');
 
-
 var app = express();
 
 
-// GLOB or GLobal OBject is to cache results for faster access and less straint on the api providers
+// GLOB or GLobal OBject is to cache results for faster access and put less strain on the api providers
 GLOB = {};
 
 // Map search density from google (used by /trends)
@@ -45,6 +44,7 @@ function getNewTrends() {
 
 // filter and sort the trends by search volume
 function filterTrends(data) {
+	
 	// Save the data for global use
 	GLOB.gHotTrendsCache = data;
 	gHotTrends = data;
@@ -52,6 +52,9 @@ function filterTrends(data) {
 	var HEAT = [];
 	
 	// Extract the largest search from each place
+	// This could be improved by using the related search terms
+	// to add the search volume for similar search terms in different areas
+	// right now, for example, "iphone 6s" will fill the global trends as different items
 	for(x in gHotTrends) {
 		var biggest = null;
 		for (y in gHotTrends[x]) {
@@ -91,15 +94,12 @@ function filterTrends(data) {
 		});
 	}
 	
+	// cache it
 	GLOB.HEAT = HEAT;
 	console.log("Trends ready!");
 }
 
-
-
-
-///////////////////////////////// It's junk /////////////////////////////////
-
+///////////////////////////////// Below doesn't matter /////////////////////////////////
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');

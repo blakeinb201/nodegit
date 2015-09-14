@@ -5,9 +5,10 @@ var http = require('http');
 var querystring = require('querystring');
 var iso3166 = require("iso-3166-2");
 
-/* GET trends. */
+// GET /trends
 router.get('/', function(req, res, next) {
-
+	
+	// Basic error checking
 	var response = {};
 	if (typeof req.query === 'undefined') {
 		response = {error: "Invalid parameters"};
@@ -21,6 +22,8 @@ router.get('/', function(req, res, next) {
 		return;
 	}
 	
+	// We allow empty a blank geo but not a blank query
+	// a blank geo means worldwide
 	if (req.query['q'] == '') {
 		response = {error: "Invalid query"};
 		res.json(response);
@@ -57,22 +60,30 @@ router.get('/', function(req, res, next) {
 				var current = new Date();
 				var currenttimestamp = current.getTime();
 				
+				// google sends back character codes for some reason
+				// yeah, I don't know either
 				var stt = String.fromCharCode.apply(null, body);
+				
+				// It also sends back a comment and function call around the data
 				stt = stt.substring(stt.indexOf("{"));
 				stt = stt.slice(0, -2);
 				
 				try {
+					// If there's an error it doesn't send back json data, it sends a web page
 					var jsonResponse = JSON.parse(stt);
 				} catch (e) {
+					// Just send an error message to the user if that happens
 					jsonResponse.status = 'error';
 					jsonResponse.errors = {error: "Malformed response"};
-					console.log(stt);
 				}
+				
+				// Google also sends back a status on error so send back that or my error in one call
 				if (jsonResponse.status == "error") {
 					res.json(jsonResponse.errors);
 					return;
 				}
 				
+				// If everything is fine then parse the results
 				var formatD = parseSearchResults(jsonResponse);
 				
 				// Sweet caching action
@@ -81,6 +92,7 @@ router.get('/', function(req, res, next) {
 					data: formatD
 				};
 				
+				// This improves performance so much I love it
 				GLOB.gSearchCache[component] = cacheInfo;
 				res.json(formatD);
 			})
@@ -93,6 +105,7 @@ router.get('/', function(req, res, next) {
 	}
 });
 
+// Parses the Google data for country codes and search volume
 function parseSearchResults(data) {
 	var actualData = data.table.rows;
 	var formattedData = [];
@@ -102,10 +115,11 @@ function parseSearchResults(data) {
 	for(a in actualData) {
 		var name = '';
 		
-		// Does this have a real name?
+		// If this is a country get it's country name
 		if (actualData[a].c[0].v.length == 2) {
 			name = iso3166.country(actualData[a].c[0].v);
 		} else {
+			// If this is a subdivision get it's subdivision name
 			name = iso3166.subdivision(actualData[a].c[0].v);
 		}
 		

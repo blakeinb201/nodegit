@@ -7,55 +7,55 @@
 		<link rel="shortcut icon" href="/favicon.ico?v=2" />
 	</head>
 	<body>
-	
 		<nav id="navi" class="navbar navbar-default navbar-static-top">
-		<div class="container-fluid">
-			<div class="row text-center">
-				<div class="col-md-3 h4"><a href="#" id="happening" class="btn btn-info btn-lg">Tweets</a></div>
-				
-				
-				<div class="col-md-6">
-				<a href="#" id="happening" class="btn btn-info btn-lg">HAPPENING time</a>
-				
-				</div>
-				
-				<div class="col-md-3 h4"><a href="#" id="happening" class="btn btn-info btn-lg">Trends</a></div>
-				
-			</div>
-			
-			<div class="row text-center">
-				<div class="col-md-3">
-				<span class="input-group-btn">
-				<button class="text-center btn btn-default" id="getTweets">View tweets</button>
-				</span>
-				</div>
-				
-				<div class="col-md-6">
-				<div class="input-group">
-				<span class="input-group-btn">
-				<button class="text-center btn btn-default" id="back_col">Clear All</button>
-				</span>
-				<input class="form-control" id="inputDefault" type="text" placeholder ="Search something">
-				<span class="input-group-btn">
-						<button class="btn btn-primary" id="searchbuttom" type="button">Search</button>
-				</span>
-				</div>
-				</div>
-				
-				<div class="col-md-3">
-				<select class="form-control" id="select"></select>
-				</div>
-			</div>
-			
-			<div class="row text-center">
-				<div class="col-md-12">
-					<div class="progress">
-						<div class="progress-bar" style="width: 0%;"></div>
+			<div class="container-fluid">
+				<div class="row text-center">
+					<div class="col-md-3 h4">
+						<a href="#" id="tweettitle" class="btn btn-info btn-lg bartitle">Tweets</a>
+					</div>
+
+					<div class="col-md-6">
+						<a href="#" id="happeningtitle" class="btn btn-info btn-xs bartitle">HAPPENING time</a>
+					</div>
+
+					<div class="col-md-3 h4">
+						<a href="#" id="trendtitle" class="btn btn-info btn-lg bartitle">Trends</a>
 					</div>
 				</div>
+				
+				<div class="row text-center">
+					<div class="col-md-3">
+						<span class="input-group-btn">
+							<button class="text-center btn btn-default" id="getTweets">View tweets</button>
+						</span>
+					</div>
+					
+					<div class="col-md-6">
+						<div class="input-group">
+							<span class="input-group-btn">
+								<button class="text-center btn btn-default" id="back_col">Clear All</button>
+							</span>
+							<input class="form-control" id="inputDefault" type="text" placeholder ="Search something">
+							<span class="input-group-btn">
+								<button class="btn btn-primary" id="searchbuttom" type="button">Search</button>
+							</span>
+						</div>
+					</div>
+					
+					<div class="col-md-3">
+						<select class="form-control" id="select"></select>
+					</div>
+				</div>
+				
+				<div class="row text-center">
+					<div class="col-md-12">
+						<div class="progress">
+							<div class="progress-bar" style="width: 0%;"></div>
+						</div>
+					</div>
+				</div>
+				
 			</div>
-			
-		</div>
 		</nav>
 		
 		<div id="" class="container-fluid full-body">
@@ -77,10 +77,6 @@
 				<div id="trends"></div>
 			</div>
 		</div>
-
-		
-		
-		
 		<!-- ////////////////////////////////// Dependencies ////////////////////////////////// -->
 		<!-- jQuery -->
 		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
@@ -90,13 +86,13 @@
 		<link href="stylesheets/bootstrap.min.css" rel="stylesheet">
 		<link href="stylesheets/bootstrap.min_cyborg.css" rel="stylesheet">
 		<script src="javascripts/bootstrap.min.js"></script>
-		
+		<!-- Dialog box (for error messages) -->
 		<link href="//cdnjs.cloudflare.com/ajax/libs/bootstrap3-dialog/1.34.5/css/bootstrap-dialog.min.css" rel="stylesheet">
-<script src="//cdnjs.cloudflare.com/ajax/libs/bootstrap3-dialog/1.34.5/js/bootstrap-dialog.min.js"></script>
+		<script src="//cdnjs.cloudflare.com/ajax/libs/bootstrap3-dialog/1.34.5/js/bootstrap-dialog.min.js"></script>
+		<!-- Autolinker (parses and creates links) -->
 		<script type="text/javascript" src="javascripts/autolinker.min.js"></script>
-		
+		<!-- twemoji (for emojis in tweets) -->
 		<script src="//twemoji.maxcdn.com/twemoji.min.js"></script>
-		
 		<!-- Map generation and core functionality -->
 		<script type="text/javascript" src="javascripts/mapGen.js"></script>
 		<!-- Style tweaks -->

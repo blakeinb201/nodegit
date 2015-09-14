@@ -1,13 +1,13 @@
 var http = require('http');
 var async = require('async');
 
-// Caching the initial trends
+// Export the function to cache the trends
 module.exports.cacheGHotness = cacheGHotness;
 
 // Takes a callback and retrieves the trends in all available countries
 function cacheGHotness(tcallback) {
 	
-	// Used to make sure things are working
+	// Used to make sure things are working (DEBUG)
 	var nums = 0;
 	
 	// Hardcoded available countries ripped from google.
@@ -16,7 +16,7 @@ function cacheGHotness(tcallback) {
 	// The cache
 	var cached = {};
 	
-	// Used to make sure things are working
+	// Used to make sure things are working (DEBUG)
 	console.log(nums + "/" + Object.keys(locations).length);
 	
 	// For each item in the list, get the trends
@@ -36,7 +36,7 @@ function cacheGHotness(tcallback) {
 				// Cache the data
 				cached[key] = parseGTrends(body, key);
 				
-				// Used to make sure things are working
+				// Used to make sure things are working (DEBUG)
 				nums += 1;
 				console.log(nums + "/" + Object.keys(locations).length);
 				
@@ -51,7 +51,7 @@ function cacheGHotness(tcallback) {
 		});
 
 		}, function (err) {
-			// Ok now we can finish by calling another function instead of returning data
+			// Ok now we can finish by calling another function instead of returning data 
 			if (err) console.error(err.message);
 			// cached is now a map of JSON data 
 			tcallback(cached);
@@ -64,10 +64,12 @@ function cacheGHotness(tcallback) {
 function parseGTrends(data, place) {
 	var parsed = [];
 	var JSONobj = JSON.parse(data);
+	
 	for(x in JSONobj.trendsByDateList) {
 		for(y in JSONobj.trendsByDateList[x].trendsList) {
 			var parsing = {};
 			var item = JSONobj.trendsByDateList[x].trendsList[y];
+			
 			parsing['title'] = item.title;
 			parsing['relatedSearchesList'] = item.relatedSearchesList;
 			parsing['titleLinkUrl'] = item.titleLinkUrl;
@@ -80,21 +82,3 @@ function parseGTrends(data, place) {
 	}
 	return parsed;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

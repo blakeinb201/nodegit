@@ -5,30 +5,10 @@ var http = require('http');
 var Twitter = require('twitter');
 var querystring = require('querystring');
 
-
-/*
-
-var client = new Twitter({
-	consumer_key: 'MQwEJdZrpkdEYzrk67bYWpTez',
-	consumer_secret: 'jU2thpOFhCyuFimdUrsxjopyXIVgm55Pts85CdFajEYBFyzk0R',
-	access_token_key: '',
-	access_token_secret: ''
-});
-
-//http://where.yahooapis.com/v1/places.q('AU-QLD')?appid=dj0yJmk9T0tZZ0JhRW1hb0FnJmQ9WVdrOVJVMHhNbXQxTlRBbWNHbzlNQS0tJnM9Y29uc3VtZXJzZWNyZXQmeD1iMA--
-
-client.get('trends/place', {id: 1}, function(error, tweets, response){
-	if(error) throw error;
-	console.log(tweets);  // The favorites. 
-	//console.log(response);  // Raw response object. 
-});
-*/
-
-// app.local.something
-/* GET home page. */
+// GET /twit
 router.get('/', function(req, res, next) {
-	//res.render('index', { title: 'HAPPENING time' });
 	
+	// Basic error checking
 	var response = {};
 	if (typeof req.query === 'undefined') {
 		response = {error: "Invalid parameters"};
@@ -42,6 +22,7 @@ router.get('/', function(req, res, next) {
 		return;
 	}
 	
+	// Nothing can be blank
 	if ((req.query['geo'] == '') || (req.query['q'] == '')) {
 		response = {error: "Invalid query"};
 		res.json(response);
@@ -51,9 +32,10 @@ router.get('/', function(req, res, next) {
 	var geoQuery = querystring.escape(req.query['geo']);
 	var tweetQuery = querystring.escape(req.query['q']);
 	
+	// Have we searched for this place before?
 	if (typeof GLOB.WOEIDs[geoQuery] === 'undefined') {
-		var apiKey = 'dj0yJmk9T0tZZ0JhRW1hb0FnJmQ9WVdrOVJVMHhNbXQxTlRBbWNHbzlNQS0tJnM9Y29uc3VtZXJzZWNyZXQmeD1iMA--';
 		
+		var apiKey = 'dj0yJmk9T0tZZ0JhRW1hb0FnJmQ9WVdrOVJVMHhNbXQxTlRBbWNHbzlNQS0tJnM9Y29uc3VtZXJzZWNyZXQmeD1iMA--';
 		var fullQuery = "/v1/places.q('" + geoQuery + "')?format=json&appid=" + apiKey;
 		
 		var options = {
@@ -62,8 +44,6 @@ router.get('/', function(req, res, next) {
 		};
 
 		var getIt = http.get(options, function(re) {
-			console.log('STATUS: ' + res.statusCode);
-			//console.log('HEADERS: ' + JSON.stringify(res.headers));
 			var bodyChunks = [];
 			re.on('data', function(chunk) {
 				bodyChunks.push(chunk);
@@ -71,26 +51,32 @@ router.get('/', function(req, res, next) {
 				var body = Buffer.concat(bodyChunks);
 				
 				var jsonWOEID = JSON.parse(body);
-				console.log(jsonWOEID);
+				
+				// Did we find a place?
 				if (jsonWOEID.places.count != '0') {
+					
+					// Check it's a country or province
 					var pl = jsonWOEID.places.place[0]['placeTypeName attrs'].code;
-					//console.log(pl);
 					if (pl == 12 || pl == 8) {
 						var placelatlong = jsonWOEID.places.place[0].centroid;
+						
+						// Figure out degrees between the center and the bounding box
 						var latRad = Math.abs(placelatlong.latitude - jsonWOEID.places.place[0].boundingBox.southWest.latitude);
 						var longRad = Math.abs(placelatlong.longitude - jsonWOEID.places.place[0].boundingBox.southWest.longitude);
 						
+						// Some maths to calculate the approximate distance
 						var latradi = latRad * 110.574;
 						var longradi = longRad * 111.320*Math.cos(placelatlong.latitude);
+						
 						var radi;
+						// Take the smaller one to remove things like mexicans in the US
 						if (latRad < longRad) {
 							radi = latradi;
 						} else {
 							radi = longradi;
 						}
 						
-						var letsjusttakeanaverage = (Math.abs(latradi) + Math.abs(longradi)) / 2;
-						
+						// Cache the results
 						var whereItem = {
 							woeid: jsonWOEID.places.place[0].woeid,
 							name: jsonWOEID.places.place[0].name,
@@ -99,9 +85,10 @@ router.get('/', function(req, res, next) {
 							longitude: placelatlong.longitude,
 							radius: radi
 						};
-						console.log(whereItem);
+
 						GLOB.WOEIDs[geoQuery] = whereItem;
 						
+						// Get the tweets from the place about the subject
 						getTweets(whereItem, tweetQuery, res);
 						return;
 					} else {
@@ -120,13 +107,17 @@ router.get('/', function(req, res, next) {
 			console.log('ERROR: ' + e.message);
 		});
 	} else {
+		// Do we already have tweets about this subject in this place?
 		var current = new Date();
 		var timestamp = current.getTime();// 1800000 = 30 minutes in milliseconds
+		
+		// Are the tweets newer than 30 minutes?
 		if ((typeof GLOB.twits[tweetQuery] !== 'undefined') && ((GLOB.twits[tweetQuery].refresh+1800000) >= timestamp)) {
 			// Cache hit!
 			console.log("tweet cache hit!");
 			res.json(GLOB.twits[tweetQuery].tweets);
 		} else {
+			// We already have the WOEID so just get the tweets
 			console.log("WOEID cache hit!");
 			getTweets(GLOB.WOEIDs[geoQuery], tweetQuery, res);
 		}
@@ -134,6 +125,7 @@ router.get('/', function(req, res, next) {
 	
 });
 
+// Retrieve tweets in a place about a subject
 function getTweets(geoPlace, q, res) {
 	
 	var client = new Twitter({
@@ -144,58 +136,51 @@ function getTweets(geoPlace, q, res) {
 	});
 	
 	var geocode = geoPlace.latitude + "," + geoPlace.longitude + "," + geoPlace.radius + "km";
-	geocode = geocode;
-	//console.log(geocode);
+	
+	// A nice library to fetch tweets
 	client.get('search/tweets', {
 		q: q,
 		geocode: geocode,
 		count: 50
 	}, function(error, tweets, response) {
 		if(error) { res.json({error: error}); return;}
-		//res.json(tweets);
-		
+
 		var current = new Date();
 		var timestamp = current.getTime();// 3600000 = 1 hour in milliseconds
 		
+		// Filter the tweets for only the place we wanted
 		var filtered = filterTweets(geoPlace, tweets);
+		
+		// Cache the results
 		GLOB.twits[q] = {
 			tweets: filtered,
 			refresh: timestamp
 		}
 		res.json(filtered);
-		
-		//res.json(tweets);  // The favorites. 
-		//res.send(tweets);  // Raw response object. 
 	});
-	
-	/*
-	client.get('trends/place', {id: geoPlace}, function(error, tweets, response){
-		//if(error) res.send(error);
-		//res.json(tweets);  // The favorites. 
-		res.send(response);  // Raw response object. 
-	});
-	*/
 }
 
 function filterTweets(geoPlace, tweets) {
 	var filteredtwits = [];
 	var statuses = tweets.statuses;
-
+	
 	for(x in tweets.statuses) {
+		// check if a place is provided and compare to the one we are searching for
 		if (typeof tweets.statuses[x].place !== 'undefined' && tweets.statuses[x].place != null) {
-			//console.log(geoPlace.country);
+			// If it is what we want push it
 			if (tweets.statuses[x].place.country == geoPlace.country) {
 				filteredtwits.push(tweets.statuses[x]);
 			}
 		} else {
+			// If no place is provided then assume it's correct
 			filteredtwits.push(tweets.statuses[x]);
 		}
 	}
+	// Fix the count and save the new tweets
 	var newLength = filteredtwits.length;
 	tweets.statuses = filteredtwits;
 	tweets.search_metadata.count = newLength;
 	return tweets;
 }
-
 
 module.exports = router;

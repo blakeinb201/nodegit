@@ -1,8 +1,9 @@
 var express = require('express');
 var router = express.Router();
 
-/* GET hot. */
+// GET /hot
 router.get('/', function(req, res, next) {
+	// Check if the user wants something
 	if ((typeof req.query['geo'] !== 'undefined') && (req.query['geo'] != '')) {
 		var geo = req.query['geo'];
 		
